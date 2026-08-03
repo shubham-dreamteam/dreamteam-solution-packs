@@ -1,0 +1,296 @@
+# Meeting Conversion Funnel
+
+**Access required:** read-only. Objects: `contact`, `meeting`, `deal`.
+Do not ask the customer about this. It is declared here so they do not have to answer it.
+
+**Read `api-truth.md` first.** Everything about auth, pagination and the traps lives
+there and is not repeated here.
+
+---
+
+## 1. What this solves
+
+Sales leaders ask two questions that the CRM does not answer directly:
+
+**"Where do contacts die?"** Not the stage they end in, but whether they ever got a
+real conversation. A contact marked Unqualified after four meetings is a qualification
+outcome. A contact marked Unqualified without a single meeting is a prospecting or
+routing failure. The CRM shows both as "Unqualified".
+
+**"Where does the funnel actually leak?"** Booked to completed, completed to qualified,
+qualified to deal. Each is a different team's problem, and only one of them is usually
+the real one.
+
+You will build two linked views.
+
+### View A: contact status by meeting outcome
+
+A matrix. Rows are contact status, columns are meeting outcome, plus a "no meeting"
+column. It answers "which of these contacts ever had a conversation".
+
+```
+STATUS                TOTAL   MTG DONE   SCHEDULED/PENDING   NO-SHOW   CANCELLED   NO MEETING
+New                      12          2                   -         -           -           10
+Contacted                41          2                   1         -           -           38
+Meeting Booked          114         63                  16        17           1           17
+Qualified                 8          7                   -         1           -            -
+Opportunity Created      17         17                   -         -           -            -
+Unqualified             317        121                   8        34          13          141
+```
+
+The headline sits above the table and names the single worst number, for example:
+*"141 of 317 Unqualified contacts (44%) were disqualified without ever booking a
+meeting."*
+
+### View B: contact to meeting to deal funnel
+
+Five stages, each showing absolute count, percentage of total, and the conversion rate
+from the previous stage. Highlight the worst conversion rate in a warning colour so the
+eye lands on the leak.
+
+```
+Total contacts        509    100%
+Meetings booked       303     60%   <- 60% converted
+Meetings completed    212     42%   <- 70% converted
+Qualified              24      5%   <- 11% converted   THE LEAK
+Open deal created      12      2%   <- 50% converted
+```
+
+**The two views must reconcile exactly.** Section 6 gives the arithmetic. This is the
+single most useful property of this pack: the matrix proves the funnel.
+
+---
+
+## 2. Data you need
+
+| Object | Endpoint | Why |
+|---|---|---|
+| contacts | `/objects/contact/records` | status, owner |
+| meetings | `/meetings` | outcome, contact links |
+| deals | `/objects/deal/records` | final funnel stage |
+
+Note the two endpoint families use **different pagination conventions**. See
+`api-truth.md` section 2. Getting this wrong here is especially damaging, because your
+numerator and denominator would come from different slices of the data and the
+percentages would still look plausible.
+
+---
+
+## 3. Discover
+
+Run these before writing any logic.
+
+**Contact status field.** `GET /api/v1/objects/contact`
+
+Look for `contact_activity_status`, type `DROPDOWN`. On a default tenant its options
+are exactly:
+
+```
+New, Contacted, Meeting Booked, Qualified, Opportunity Created, Unqualified
+```
+
+Use the options this tenant returns, in the order returned. Do not hardcode the list
+above. Tenants can override standard fields.
+
+If `contact_activity_status` does not exist, look for another `DROPDOWN` field whose
+options describe a lifecycle. If there is none, stop and tell the user this solution
+needs a contact status field.
+
+**Meeting fields.** `GET /api/v1/objects/meeting`
+
+You will find: `title`, `start_at`, `end_at`, `meeting_url`, `recording_url`,
+`contact_ids`, `transcript`, `ai_meeting_summary`, `ai_sentiment`, `external`,
+`user_id`, `bot_id`.
+
+**You will not find a meeting outcome field. There isn't one.** Read section 4.
+
+**Deal fields.** `GET /api/v1/objects/deal`
+
+You need `contact_ids`, `status`, `amount`, `stage_id`, `pipeline_id`.
+
+---
+
+## 4. Map: deriving meeting outcome
+
+**This is the hard part of this pack and the part most likely to be got wrong.**
+
+Dreamteam does not store a meeting outcome. There is no `status` field on a meeting,
+no "completed", no "no-show", no "cancelled". Any tool showing those buckets is
+deriving them. You must derive them too, and you must be explicit with the user about
+how.
+
+### The signals available
+
+**Completion evidence.** A meeting genuinely happened if it produced an artefact:
+
+```
+transcript is non-empty  OR  recording_url is present  OR  ai_meeting_summary is non-empty
+```
+
+**Time.** `start_at` relative to now.
+
+**Bot telemetry.** The `/meetings` endpoint returns a `recording_bot` object that
+`/objects/meeting/records` does not:
+
+```json
+{"state":"ATTACHED","status":"DONE","scheduled_join_at":"2026-07-18T05:30:00Z",
+ "reason":"bot_kicked_from_waiting_room","can_attach":false,"can_detach":false}
+```
+
+Observed values, from a live tenant's 185 meetings:
+
+| state / status / reason | Count | What it means |
+|---|---|---|
+| `NOT_APPLICABLE` / `PAST_START` | 89 | meeting imported after it happened, backfill. **No outcome signal.** |
+| `NOT_APPLICABLE` / `INTERNAL_MEETING` | 40 | all attendees internal, bot skipped by design |
+| `ATTACHED` / `DONE` / `timeout_exceeded_waiting_room` | 28 | bot joined, host never admitted it. Meeting likely happened, not captured. |
+| `NOT_APPLICABLE` / `NO_MEETING_URL` | 13 | no conferencing link, in person or personal event |
+| `ATTACHED` / `TRANSCRIPT_DONE` / `timeout_exceeded_everyone_left` | 5 | captured successfully, meeting definitely happened |
+| `ATTACHED` / `DONE` / `bot_kicked_from_waiting_room` | 5 | bot actively removed. Meeting happened. |
+| `ATTACHED` / `PENDING` | 2 | scheduled, bot will join |
+
+**Critical: `recording_bot` describes the bot, not the meeting.** A missing recording
+does not mean a missing meeting. In the tenant above, 89 of 185 meetings carry
+`PAST_START`, meaning they were imported after the fact and the bot never had a chance
+to join. Treating those as "no-show" would be wrong for roughly half the dataset.
+
+### The recommended derivation
+
+```
+COMPLETED         start_at < now AND completion evidence present
+SCHEDULED/PENDING start_at >= now
+                  OR (start_at < now AND no completion evidence)   <- label "Pending Review"
+NO-SHOW           not derivable from standard fields
+CANCELLED         not derivable from standard fields
+NO MEETING        contact appears in no meeting's contact_ids
+```
+
+Note what "Scheduled/Pending" really contains: genuinely upcoming meetings **and**
+meetings whose date has passed with no outcome logged. Those are different things and
+users will misread the column unless you say so. Put a line under the table:
+
+> *"Scheduled/Pending includes meetings whose date has already passed with no outcome
+> logged yet (Pending Review), not only genuinely upcoming ones."*
+
+### No-show and cancelled
+
+These cannot be derived from standard fields. Before building, ask the user:
+
+> *"Dreamteam doesn't store no-show or cancelled as a meeting outcome. Do you track
+> those somewhere, for example a custom field on the meeting, a note convention, or
+> your calendar provider? If not, I'll leave those columns out rather than guess."*
+
+**Leaving the columns out is the correct behaviour if there is no source.** Do not
+infer no-show from a missing recording. As the table above shows, that would
+misclassify backfilled meetings, internal meetings, and every meeting where the host
+simply did not admit the bot.
+
+If the tenant does have a custom field, discover its options and map them.
+
+---
+
+## 5. Compute
+
+### View A, the matrix
+
+For each contact, resolve exactly one outcome bucket using this precedence, so every
+contact is counted once and the row sums to TOTAL:
+
+1. No meetings linked at all → **NO MEETING**
+2. Any meeting classified COMPLETED → **MTG DONE**
+3. Otherwise, any meeting classified CANCELLED → **CANCELLED**
+4. Otherwise, any meeting classified NO-SHOW → **NO-SHOW**
+5. Otherwise → **SCHEDULED/PENDING**
+
+A contact with three meetings where one completed counts as MTG DONE, once. The columns
+are mutually exclusive by construction. Verify: every row must satisfy
+`TOTAL = MTG DONE + SCHEDULED/PENDING + NO-SHOW + CANCELLED + NO MEETING`.
+
+Linking contacts to meetings uses `meeting.contact_ids`, a LOOKUP array. One meeting can
+reference several contacts, and each of them counts.
+
+### View B, the funnel
+
+Each stage counts only contacts that passed the previous stage. This is a strict funnel,
+not five independent counts.
+
+| Stage | Definition |
+|---|---|
+| Total contacts | all contacts |
+| Meetings booked | contacts with at least one linked meeting, any outcome |
+| Meetings completed | contacts with at least one COMPLETED meeting |
+| Qualified | contacts with a completed meeting **and** status in {Qualified, Opportunity Created} |
+| Open deal created | those contacts who are linked to at least one open deal |
+
+**The Qualified stage is conditional and this matters.** It is not "all contacts whose
+status is Qualified". It is "contacts who got a real conversation and then qualified".
+The difference is the point of the whole chart: it isolates conversion *given* a
+meeting, rather than blending in contacts that qualified without one.
+
+Conversion rate on each row is `stage / previous stage`, not stage over total. Show
+percentage of total separately on the right.
+
+For "open deal", confirm with the user what open means on their tenant. `deal.status`
+is a free-text field, so read its distinct values rather than assuming `"open"`.
+
+---
+
+## 6. Verify
+
+**The two views cross-check each other exactly. Assert all four of these before
+rendering. If any fails, you have a bug, most likely pagination.**
+
+```
+Funnel "Total contacts"      == sum of the matrix TOTAL column
+Funnel "Meetings booked"     == total contacts - sum of the NO MEETING column
+Funnel "Meetings completed"  == sum of the MTG DONE column
+Funnel "Qualified"           == MTG DONE for the Qualified row + MTG DONE for the
+                                Opportunity Created row
+```
+
+Worked example from a real tenant, showing all four holding:
+
+```
+TOTAL column:        12 + 41 + 114 + 8 + 17 + 317  = 509   -> Total contacts 509
+NO MEETING column:   10 + 38 +  17 + 0 +  0 + 141  = 206   -> 509 - 206 = 303 booked
+MTG DONE column:      2 +  2 +  63 + 7 + 17 + 121  = 212   -> Meetings completed 212
+Qualified rows:                        7 + 17      =  24   -> Qualified 24
+```
+
+Also assert, per `api-truth.md`: every fetched collection's row count equals the
+reported total. Display "212 of 212 meetings" style counts in the UI so truncation is
+visible rather than silent.
+
+---
+
+## 7. Traps
+
+**Pagination convention differs between the two endpoints you need here.** `/meetings`
+is 0-indexed and uses `size`. `/objects/*/records` is 1-indexed and uses `page_size`.
+Use the wrong one and you get a clean-looking response with a fraction of the rows, and
+your funnel percentages will be confidently wrong. This is the single most likely cause
+of a mismatch in section 6.
+
+**`recording_bot` is about the bot, not the meeting.** Never treat a missing recording
+as a missing meeting. In the sample tenant, 48% of meetings had no bot signal at all
+because they were imported after the fact.
+
+**Do not invent no-show or cancelled.** If there is no source field, omit the columns
+and say why in the UI. A missing column is honest. A guessed column becomes a metric
+someone manages their team against.
+
+**The "Scheduled/Pending" column is two different things.** Genuinely upcoming, and
+past-dated with no outcome. Label it, or users will read a stale-data problem as a
+healthy pipeline.
+
+**Status is a point-in-time value, not history.** `contact_activity_status` tells you
+where a contact is now, not the path it took. A contact currently Unqualified that had
+a completed meeting was not necessarily Unqualified when the meeting happened. Do not
+describe this chart as showing progression over time. It is a snapshot.
+
+**A contact can link to several meetings.** Count contacts once using the precedence
+in section 5, or your columns will sum to more than the row total.
+
+**Empty is not zero.** If a fetch fails, an error object has no `results` key and naive
+code renders 0. Show an error state instead. A funnel of zeros looks like a business
+problem and will be reported as one.
