@@ -110,6 +110,21 @@ It will ask you a few questions, then build.
 
 The same text lives in [PROMPT.md](PROMPT.md), which is easier to copy cleanly.
 
+### If your platform cannot reach the internet
+
+Some platforms, Emergent among them, run in a sandbox with no outbound web access, so
+the fetch in Step 1 fails. That is a platform limitation, not a broken link.
+
+Use a self-contained version instead. Everything is in the one paste, nothing is
+fetched, and you skip Q1 because you already picked the solution:
+
+| Solution | Self-contained prompt |
+|---|---|
+| Meeting conversion funnel | [inline/meeting-conversion-funnel.md](inline/meeting-conversion-funnel.md) |
+
+These are generated from the same source files by `scripts/build-inline.py`, so they
+never drift from the packs above.
+
 ---
 
 ## What you actually have to do
