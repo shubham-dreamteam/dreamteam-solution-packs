@@ -180,6 +180,5 @@ These solutions existed as of 2026-08-03. This list may be stale:
 
 - `meeting-conversion-funnel`: contact status by meeting outcome, and the
   contact to meeting to deal funnel
-- `forecasting`: pipeline forecast by category, stage and owner
-- `churn-analysis`: at-risk account identification
-- `pipeline-hygiene`: stalled deals, missing fields, stage mismatches
+- `forecasting`: weighted forecast, coverage, slippage, win rates, per-owner
+- `churn-analysis`: account risk from activity decay, coverage gaps, single-threading

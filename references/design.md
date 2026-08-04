@@ -139,15 +139,88 @@ precise than any chart. Use it without apology.
 
 ## 7. Interaction
 
-- **Hover is expected, not optional.** Crosshair and tooltip on lines and areas,
-  per-mark tooltip on bars, cells and points. The only thing that skips it is a bare
-  stat tile.
+**A report you cannot interrogate is a screenshot. Build a tool, not a picture.**
+
+The default assumption is wrong in most generated dashboards: they render the numbers
+and stop. Every number on the page is an aggregate over specific records, and the first
+question any reader has is "which ones?". If they cannot get to that answer without
+leaving for the CRM, the dashboard has failed.
+
+### 7.1 Every number is a door
+
+**Every aggregate is clickable and drills to the records behind it.** A matrix cell, a
+funnel stage, a bar, a stat tile, a table row. Clicking opens a panel listing the exact
+records that make up that number.
+
+The drill panel shows:
+
+- The count, and the filter that produced it in plain language, for example
+  *"Unqualified contacts with no meeting: 141"*.
+- A table of the underlying records with the fields that matter for this view, sorted,
+  with the same tabular figures as everywhere else.
+- A link per row back to that record in Dreamteam, so the reader can act. Derive the
+  URL pattern from the customer's Dreamteam address and confirm one link works before
+  relying on it. If you cannot establish the pattern, show the record id and say so
+  rather than shipping links that 404.
+- **Copy and CSV export of exactly what is on screen**, not of the whole dataset.
+
+Drill state belongs in the URL so a link can be pasted into Slack and open the same
+view. This is the single feature that turns a dashboard into something a team uses.
+
+### 7.2 Cross-filtering
+
+Clicking a dimension filters the whole page, not just its own chart. Selecting one
+owner, source or cohort re-renders every view for that slice, with a visible chip
+showing the active filter and a one-click clear.
+
+Active filters must be obvious. A reader looking at a filtered number who thinks it is
+the total will make a bad decision, and that is on the interface.
+
+### 7.3 Global controls
+
+One row above the content, never a sidebar on a single-screen dashboard:
+
+- **Date range**, with sensible presets, and it must say which date field it filters
+  on. "Created", "closed" and "last activity" give different answers and the reader
+  cannot guess which you used.
+- **Owner**, **pipeline** and any dimension the solution names.
+- All of them reflected in the URL.
+
+### 7.4 Table behaviour
+
+Any table of more than about five rows: sortable on every column, with the current sort
+shown. Sticky header on scroll. Numeric columns right-aligned. Row hover. Click a row to
+drill.
+
+Sorting is client-side over the already-fetched dataset. Do not re-query on sort, and
+never sort only the visible page, which silently gives the wrong top-10.
+
+### 7.5 Hover
+
+- Crosshair and tooltip on lines and areas, per-mark tooltip on bars, cells and points.
+  The only thing that skips it is a bare stat tile with no plot.
+- Tooltips carry the value, the dimension, and the share of total. Not just the number
+  already printed on the mark.
 - Hit targets larger than the mark.
-- Filters in a single row above the content, never in a sidebar for a single-screen
-  dashboard.
-- **Transitions: one, short, and only on state change.** 150 to 250ms, ease-out.
-  Nothing animates on page load. Nothing loops.
+
+### 7.6 Keyboard and states
+
+- Everything clickable is reachable by keyboard and has a visible focus ring.
+- Escape closes a drill panel. Arrow keys move between rows.
+- **Loading, empty, error and filtered-to-nothing are four different states** and each
+  needs its own treatment. "Filtered to nothing" says which filter caused it and offers
+  to clear it. An error names the failing call and its status.
+- Never show a spinner over stale numbers. Either the old view with a subtle loading
+  indicator, or a skeleton. Not a number that is quietly out of date.
+
+### 7.7 Motion
+
+- **One transition, short, only on state change.** 150 to 250ms, ease-out.
+- Nothing animates on page load. Nothing loops. No animated counters.
 - Honour `prefers-reduced-motion` by removing transitions entirely.
+
+Interaction should feel instant. Restraint in motion is what separates calm from
+theatrical, and this is where most dashboards overreach.
 
 ## 8. Layout
 

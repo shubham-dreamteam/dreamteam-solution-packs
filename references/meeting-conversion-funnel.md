@@ -73,6 +73,13 @@ Rules that make it read as a funnel:
 - A stage of 0 still gets a visible marker, otherwise a total collapse looks like a
   rendering bug.
 
+**Both views must drill.** Clicking any matrix cell, funnel stage or conversion gap
+opens the contacts behind that number, with status, owner, meeting count, last meeting
+date and a link back to the record in Dreamteam. Clicking a status row cross-filters
+the funnel to that status, and vice versa. The design standard has the full
+requirements; none of it is optional here, because "141 contacts were dropped without a
+meeting" is useless until you can see which 141.
+
 **The two views must reconcile exactly.** Section 6 gives the arithmetic. This is the
 single most useful property of this pack: the matrix proves the funnel.
 
@@ -269,6 +276,12 @@ GET /api/v1/pipelines/{pipeline_id}
 ```
 
 A deal is open when the stage matching its `stage_id` has `is_closed: false`.
+
+The stage also carries `stage_category` (`Early Stage`, `Mid-Level Stage`, `Late Stage`,
+`Closed Won`, `Closed Lost`), `stage_order` and `win_probability`. If you need to tell a
+won deal from a lost one, use `stage_category`. **`is_closed` is true for both**, so it
+cannot distinguish them, and matching on the stage name is unreliable because names are
+tenant-specific.
 
 **Trap: the list endpoint omits stages.** `GET /pipelines` returns pipelines with no
 `stages` key at all. You must fetch each pipeline individually by id to get them.

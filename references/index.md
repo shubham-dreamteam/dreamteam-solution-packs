@@ -22,16 +22,20 @@ Access: read-only. Objects: contact, meeting, deal.
 File: `meeting-conversion-funnel.md`
 
 ### forecasting
-*Not yet written.* Pipeline forecast by category, stage and owner.
+**What will we close, and will we make the number.**
+Weighted forecast against target, composition by stage, the deals that decide the
+quarter, slippage, win rates by count and by value, per-owner attainment, and the
+health signals behind the number. Every figure drills to its deals.
+Access: read-only. Objects: deal, pipeline, user, target.
 File: `forecasting.md`
 
 ### churn-analysis
-*Not yet written.* At-risk account identification from engagement and activity decay.
+**Which accounts are going quiet, and which relationships are fragile.**
+Activity-recency decay, coverage gaps, single-threading, engagement trend, post-sale
+silence and loss reasons. Note: Dreamteam holds no subscription data, so this is
+account risk, not churn rate. The pack says so up front.
+Access: read-only. Objects: company, contact, deal, pipeline, meeting, task, user.
 File: `churn-analysis.md`
-
-### pipeline-hygiene
-*Not yet written.* Stalled deals, missing fields, stage mismatches.
-File: `pipeline-hygiene.md`
 
 ---
 

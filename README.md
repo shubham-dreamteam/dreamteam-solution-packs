@@ -249,15 +249,14 @@ access up front. [SETUP.md](SETUP.md) covers how the user you create sets the ce
 | Pack | What it answers | Status |
 |---|---|---|
 | [meeting-conversion-funnel](references/meeting-conversion-funnel.md) | Where contacts die, and where the funnel leaks | Ready |
-| forecasting | Pipeline forecast by category, stage and owner | Planned |
-| churn-analysis | Which accounts are at risk | Planned |
-| pipeline-hygiene | Stalled deals, missing fields, stage mismatches | Planned |
+| [forecasting](references/forecasting.md) | What will we close, and will we make the number | Ready |
+| [churn-analysis](references/churn-analysis.md) | Which accounts are going quiet, and which relationships are fragile | Ready |
 
 Two files load on every build. [api-truth.md](references/api-truth.md) carries the
 verified API behaviour, including the pagination traps that silently produce wrong
 numbers. [design.md](references/design.md) is the visual standard: calm rather than
-loud, charts chosen by the data's job, and the prohibitions that make a dashboard look
-generated.
+loud, charts chosen by the data's job, full drill-down and cross-filtering, and the
+prohibitions that make a dashboard look generated.
 
 ---
 
