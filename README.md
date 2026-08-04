@@ -158,6 +158,17 @@ It will ask you a few questions, then build.
 
 The same text lives in [PROMPT.md](PROMPT.md), which is easier to copy cleanly.
 
+### If your platform cannot fetch a URL
+
+Some sandboxed platforms have no outbound web access, so Step 1 fails with a 404 or a
+timeout. Paste **[inline/PROMPT-ALL.md](inline/PROMPT-ALL.md)** instead.
+
+It is the same prompt with the catalogue, every solution, the API reference and the
+design standard already inside it. You still get asked which solution you want, it just
+reads the list from further down the message rather than fetching it.
+
+Generated from the same sources by `scripts/build-inline.py`, so it cannot drift.
+
 
 ---
 
