@@ -1,10 +1,6 @@
 # Dreamteam Solution Packs
 
-Build dashboards and internal tools on your Dreamteam CRM data, from any AI-coding
-platform, by pasting one prompt.
-
-Like importing a Postman collection, except it carries the thinking as well as the
-endpoints.
+Build any dashboards and tools on your Dreamteam CRM data by pasting one prompt.
 
 ---
 
