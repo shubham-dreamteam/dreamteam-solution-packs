@@ -84,7 +84,28 @@ If Dreamteam's API supports it, the app may do it. Do not restrict the applicati
 beyond what the reference pack asks for. If the pack says read-only, stay read-only. If
 it declares writes, build them properly.
 
-**5. Never invent a number.**
+**5. Prove the connection works before building anything else.**
+Your first task after I give you the key is a connection test: call `/api/v1/users` and
+show me the result. Use `Authorization: Bearer <key>` plus the `Origin` header. If that
+returns 401, retry once with `x-api-key` instead, because older keys use that. Tell me
+which one worked.
+
+Do not build a single screen until this passes. Debugging auth through a half-built
+dashboard wastes both our time.
+
+**6. Never turn a failed API call into a statement about my business.**
+An API call has three outcomes, not two: data, genuinely empty, and failed. Never
+collapse "failed" into "empty".
+
+A 401 while checking whether a user exists means the lookup broke. It does not mean the
+user is missing. Do not render "not a member of this workspace", "no deals found" or
+"zero meetings" unless a request actually succeeded. Show the failing call and its
+status code instead, so I can fix it.
+
+This has already gone wrong in a real build, and it sent someone to their admin to solve
+a problem that did not exist.
+
+**7. Never invent a number.**
 If a metric cannot be derived from available fields, show it as unavailable and tell me
 why. Do not estimate, interpolate, or fill gaps. A blank cell is fine. A plausible wrong
 number is not.

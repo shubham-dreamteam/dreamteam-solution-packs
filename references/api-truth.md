@@ -13,20 +13,49 @@ file for auth, pagination and the traps.
 
 ```
 Base URL:  https://api.dreamteamcrm.ai/api/v1
-Auth:      x-api-key: <YOUR_KEY>
+Auth:      Authorization: Bearer <YOUR_KEY>
 Tenant:    Origin: https://<tenant-slug>.dreamteamcrm.ai
 ```
 
-Both headers are required on every request.
+Both headers are required on every request. `https://api.dreamteamcrm.info` is an alias
+and behaves identically. Prefer the `.ai` host.
+
+**Use `Bearer`.** It is what the profile page issues today and what the official docs
+describe, so it is what customers will have.
+
+### Fallback: older keys use a different header
+
+Some keys issued before the current profile-token scheme authenticate with
+`x-api-key: <key>` instead, and return `401` on `Bearer`. Nothing in the key tells you
+which you hold, so run one probe at startup rather than hardcoding:
+
+```
+GET /api/v1/users   with  Authorization: Bearer <key>  + Origin
+  200  -> use Bearer for everything after this
+  401  -> retry once with  x-api-key: <key>
+            200  -> use x-api-key instead
+            401  -> the key is genuinely invalid. Say so and stop.
+```
+
+Once at startup, not per request. Log which scheme won so a later failure is
+diagnosable.
+
+*Verified:* four keys across four tenants, including `dreamteam`, all return 200 with
+`x-api-key` and 401 with `Bearer`. A profile-page token on that same tenant does the
+opposite. Same workspace, opposite result, so this is about the credential, not the
+tenant.
+
+### Other ways the request fails
 
 | Mistake | What you get |
 |---|---|
-| `Authorization: Bearer <key>` | `401 Unauthorized` |
+| Wrong header for your credential type | `401 Unauthorized` |
+| Genuinely invalid or reset key | `401 Unauthorized` |
 | No `Origin` header | `404` |
 | Called from a browser | `403 Invalid CORS request` at preflight |
 
-`https://api.dreamteamcrm.info` is an alias and behaves identically. Prefer the `.ai`
-host.
+The first two are indistinguishable by status code, which is why the probe tries both
+before concluding a key is bad.
 
 ### Why browser calls can never work
 
@@ -86,6 +115,43 @@ dashboard ends up built on 20 of 196 deals with no warning anywhere.
 
 Show the record count and the source total somewhere in the UI. If a user can see
 "212 of 212 meetings", a truncation bug becomes visible instead of invisible.
+
+### Never turn an API failure into a business answer
+
+**This has already happened in a real build and it is the worst failure mode in this
+system.**
+
+An app checked whether a signed-in person existed in Dreamteam. The lookup returned
+`401 Unauthorized` because the auth header was wrong. The code treated "the call did not
+succeed" as "the user was not found" and showed:
+
+> *"Not a member of this workspace. shubham@dreamteam.co signed in with Google, but this
+> email is not in the Dreamteam workspace user list. Ask an admin to add you."*
+
+Every word of that is false, and it is confidently specific. It sent the user to an
+admin to fix a problem that did not exist, while hiding the real one: a broken key.
+A blank screen would have been more useful.
+
+The rule: **an API call has three outcomes, not two.**
+
+| Outcome | Meaning | What the user should see |
+|---|---|---|
+| Success with data | the answer | the answer |
+| Success, empty result | genuinely nothing matched | "no results" |
+| Failure (any non-2xx, timeout, malformed body) | you do not know anything | an error naming what broke |
+
+Never collapse row three into row two. Concretely:
+
+- Check the HTTP status before touching the body. Non-2xx means throw, not `[]`.
+- A `401` from a user-existence check means the lookup failed, never "user not found".
+- Error messages must name the failing call and status: *"Could not reach Dreamteam:
+  `GET /users` returned 401. Check the API key."* Then the person reading it can act.
+- Never phrase an infrastructure failure in business language. "Not a member",
+  "no deals in pipeline" and "zero meetings" are claims about the customer's business.
+  Only say them when a request actually succeeded.
+
+Apply this everywhere, not just at sign-in. An empty dashboard caused by a bad key looks
+exactly like a quiet quarter.
 
 ### Errors do not have a rows key
 
