@@ -158,20 +158,6 @@ It will ask you a few questions, then build.
 
 The same text lives in [PROMPT.md](PROMPT.md), which is easier to copy cleanly.
 
-### If your platform cannot reach the internet
-
-Some platforms, Emergent among them, run in a sandbox with no outbound web access, so
-the fetch in Step 1 fails. That is a platform limitation, not a broken link.
-
-Use a self-contained version instead. Everything is in the one paste, nothing is
-fetched, and you skip Q1 because you already picked the solution:
-
-| Solution | Self-contained prompt |
-|---|---|
-| Meeting conversion funnel | [inline/meeting-conversion-funnel.md](inline/meeting-conversion-funnel.md) |
-
-These are generated from the same source files by `scripts/build-inline.py`, so they
-never drift from the packs above.
 
 ---
 
@@ -256,12 +242,14 @@ browser. See [api-truth.md](references/api-truth.md) for why.
 | Claude Code / Cursor | Yes | packs read as plain markdown |
 | Bolt.new | Fragile | WebContainer, no persistent server |
 
+Your platform needs to be able to fetch a URL, since the prompt pulls the catalogue and
+the reference files itself.
+
 ---
 
 ## Adding a solution
 
-Write one markdown file in [references/](references/), following the six-section shape
-in the [design spec](docs/specs/2026-08-03-solution-packs-design.md), and add it to
+Write one markdown file in [references/](references/) and add it to
 [references/index.md](references/index.md).
 
 Nothing else changes. Not the prompt, not this README's copy block, not anything a
