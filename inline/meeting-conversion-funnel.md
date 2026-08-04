@@ -119,17 +119,34 @@ meeting."*
 
 ##### View B: contact to meeting to deal funnel
 
-Five stages, each showing absolute count, percentage of total, and the conversion rate
-from the previous stage. Highlight the worst conversion rate in a warning colour so the
-eye lands on the leak.
+**Render this as an actual funnel, not a bar chart.** Five stages, each bar
+**centre-aligned** and narrowing as counts fall, so the taper is visible at a glance.
+Conversion rate sits between consecutive bars, in the gap, because it describes the
+transition rather than either stage. Percentage of total goes on the right.
 
 ```
-Total contacts        509    100%
-Meetings booked       303     60%   <- 60% converted
-Meetings completed    212     42%   <- 70% converted
-Qualified              24      5%   <- 11% converted   THE LEAK
-Open deal created      12      2%   <- 50% converted
+        Total contacts   ████████████████████████████████████████   509   100%
+                                    60% converted
+       Meetings booked        ███████████████████████████           303    60%
+                                    70% converted
+    Meetings completed           ███████████████████                212    42%
+                                    11% converted   <- worst, highlight
+             Qualified                  ██                           24     5%
+                                    50% converted
+     Open deal created                  █                            12     2%
 ```
+
+Rules that make it read as a funnel:
+
+- **Bar width is proportional to count**, scaled so stage 1 fills the width. A stage
+  with 24 of 509 must actually look like a sliver. Do not use a minimum bar width that
+  flattens the taper, and do not give every stage its own scale.
+- **Centre each bar.** Left-aligned bars read as a progress list, not a funnel.
+- **Conversion sits between bars**, not inside or beside them.
+- **Highlight the single worst conversion** in a warning colour, and label it. That one
+  number is the reason the chart exists.
+- A stage of 0 still gets a visible marker, otherwise a total collapse looks like a
+  rendering bug.
 
 **The two views must reconcile exactly.** Section 6 gives the arithmetic. This is the
 single most useful property of this pack: the matrix proves the funnel.
@@ -295,7 +312,7 @@ not five independent counts.
 | Meetings booked | contacts with at least one linked meeting, any outcome |
 | Meetings completed | contacts with at least one COMPLETED meeting |
 | Qualified | contacts with a completed meeting **and** status in {Qualified, Opportunity Created} |
-| Open deal created | those contacts who are linked to at least one open deal |
+| Open deal created | those contacts linked to at least one deal in a stage where `is_closed` is false |
 
 **The Qualified stage is conditional and this matters.** It is not "all contacts whose
 status is Qualified". It is "contacts who got a real conversation and then qualified".
@@ -305,8 +322,42 @@ meeting, rather than blending in contacts that qualified without one.
 Conversion rate on each row is `stage / previous stage`, not stage over total. Show
 percentage of total separately on the right.
 
-For "open deal", confirm with the user what open means on their tenant. `deal.status`
-is a free-text field, so read its distinct values rather than assuming `"open"`.
+##### Determining whether a deal is open
+
+**Do not use `deal.status`. It is not a lifecycle field.**
+
+This was got wrong in a real build. `status` is free text and on a live tenant every one
+of 52 deals held the value `"Red Flag"`, an AI risk annotation. The app read the distinct
+values, found one, treated it as "open", and reported a meaningless zero.
+
+Open and closed live on the **stage**, not the deal:
+
+```
+GET /api/v1/pipelines/{pipeline_id}
+  -> { "id": ..., "name": ..., "stages": [
+         {"name": "Qualified",      "is_closed": false},
+         {"name": "Evaluation",     "is_closed": false},
+         {"name": "In Pilot Phase", "is_closed": false},
+         {"name": "Negotiation",    "is_closed": false},
+         {"name": "Won",            "is_closed": true},
+         {"name": "Lost",           "is_closed": true} ] }
+```
+
+A deal is open when the stage matching its `stage_id` has `is_closed: false`.
+
+**Trap: the list endpoint omits stages.** `GET /pipelines` returns pipelines with no
+`stages` key at all. You must fetch each pipeline individually by id to get them.
+`GET /pipelines/{id}/stages` and `GET /stages?pipeline_id=` both 404, so the single
+pipeline fetch is the only route.
+
+**Trap: resolve against the deal's own pipeline.** Tenants can have several pipelines
+and a deal's `stage_id` only means something within its own `pipeline_id`. On the tenant
+above, one deal carried a `stage_id` absent from the default pipeline's six stages.
+If a `stage_id` does not resolve, count it as unknown and surface the count. Do not
+silently treat it as open or closed.
+
+Stage names are tenant-specific. Never match on the string "Won" or "Closed". Use the
+`is_closed` boolean.
 
 ---
 
@@ -369,6 +420,14 @@ in section 5, or your columns will sum to more than the row total.
 **Empty is not zero.** If a fetch fails, an error object has no `results` key and naive
 code renders 0. Show an error state instead. A funnel of zeros looks like a business
 problem and will be reported as one.
+
+**A status of "Meeting Booked" does not mean a meeting exists.** On a live tenant, 262
+of 274 contacts in that status had no linked meeting at all. That is a real finding
+about their process, not a bug in your join, so surface it rather than hiding it. But
+check your `contact_ids` matching first, because a broken join looks identical.
+
+**`deal.status` is not open or closed.** See section 5. Every deal on the tenant tested
+carried `"Red Flag"`. Use the stage's `is_closed` flag.
 
 
 ---
