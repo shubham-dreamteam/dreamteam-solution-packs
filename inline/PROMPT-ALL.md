@@ -21,10 +21,10 @@ standard at the end of this message.]
   b) Only people who exist in Dreamteam
   c) No sign-in, private link only
 
-[Only if I pick (b): tell me it needs an auth provider that returns a verified email
-claim, such as Google or Microsoft OAuth, because plain username and password would let
-anyone type a colleague's address. Two sentences, then let me change my mind. Do not say
-any of this before I have chosen.]
+[Only if I pick (b): in one or two sentences, tell me it needs an auth provider that
+returns a verified email claim, such as Google or Microsoft OAuth. Then carry straight
+on with (b). Do not say any of this before I have chosen, and do not ask the question
+again.]
 
 **Q3.** [only if I chose 2b] **What should each person see?**
   a) Everyone sees all data
@@ -1080,6 +1080,9 @@ No marketing language, no invented value propositions, no filler headings, no ta
 Do not explain what a chart obviously shows. Do explain a definition the reader cannot
 infer, for example what counts as a completed meeting, and put it below the chart in
 muted ink.
+
+**No em dashes**, in the interface or in anything you write to me. Use a comma, a full
+stop, or restructure the sentence.
 
 #### 10. Before you call it done
 

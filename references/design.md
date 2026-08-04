@@ -169,6 +169,9 @@ Do not explain what a chart obviously shows. Do explain a definition the reader 
 infer, for example what counts as a completed meeting, and put it below the chart in
 muted ink.
 
+**No em dashes**, in the interface or in anything you write to me. Use a comma, a full
+stop, or restructure the sentence.
+
 ## 10. Before you call it done
 
 - Open the rendered page and look at it. Check for label collisions, overflow, and

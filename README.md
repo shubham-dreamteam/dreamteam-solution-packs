@@ -55,9 +55,14 @@ It will ask you a few questions, then build.
     ## Step 2: Ask me these three questions
 
     **How to ask.** One question per message. One line for the question, one short line per
-    option. No preamble, no explanation of the trade-offs, no paragraph about what an option
-    implies. I will ask if I want detail. A question longer than about five lines is too
-    long, so cut it.
+    option, each option on its own line. No preamble, no explanation of the trade-offs, no
+    paragraph about what an option implies. I will ask if I want detail. A question longer
+    than about five lines is too long, so cut it.
+
+    **Ask each question exactly once.** Once I have answered, that answer stands. Never
+    re-ask it, never ask me to confirm it, never restate the options back to me for a second
+    pick. If you have a caveat about my answer, say it in one or two sentences and keep
+    going. I will tell you if I want to change something.
 
     Anything below written in brackets is a note to you, not text to read out.
 
@@ -70,10 +75,10 @@ It will ask you a few questions, then build.
       b) Only people who exist in Dreamteam
       c) No sign-in, private link only
 
-    [Only if I pick (b): tell me it needs an auth provider that returns a verified email
-    claim, such as Google or Microsoft OAuth, because plain username and password would let
-    anyone type a colleague's address. Two sentences, then let me change my mind. Do not say
-    any of this before I have chosen.]
+    [Only if I pick (b): in one or two sentences, tell me it needs an auth provider that
+    returns a verified email claim, such as Google or Microsoft OAuth. Then carry straight
+    on with (b). Do not say any of this before I have chosen, and do not ask the question
+    again.]
 
     **Q3.** [only if I chose 2b] **What should each person see?**
       a) Everyone sees all data
