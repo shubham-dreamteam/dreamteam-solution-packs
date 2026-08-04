@@ -85,6 +85,9 @@ def build_rules(prompt: str) -> str:
     rules = rules.replace(
         "beyond what the reference pack asks for. If the pack says read-only",
         "beyond what the solution below asks for. If it says read-only")
+    rules = rules.replace(
+        "**`references/design.md` is binding**",
+        "**the Design standard at the end of this message is binding**")
 
     # Surface the no-web fallback inside the branding rule.
     anchor = "dark variant of it."
@@ -110,14 +113,16 @@ def strip_cross_refs(text: str) -> str:
     # "`api-truth.md` section 2" must not become "...this message section 2"
     text = re.sub(r"`api-truth\.md`(,?\s+)(section\b)",
                   r"the API reference at the end of this message,\1\2", text)
+    text = text.replace("`design.md`", "the Design standard at the end of this message")
     return text.replace("`api-truth.md`", "the API reference at the end of this message")
 
 
 def main() -> int:
     prompt = (ROOT / "PROMPT.md").read_text()
     api_truth = (REFS / "api-truth.md").read_text()
+    design = (REFS / "design.md").read_text()
     packs = sorted(p for p in REFS.glob("*.md")
-                   if p.name not in {"api-truth.md", "index.md"})
+                   if p.name not in {"api-truth.md", "design.md", "index.md"})
 
     if not packs:
         print("no solution packs found in references/", file=sys.stderr)
@@ -135,7 +140,16 @@ def main() -> int:
             "\n---\n",
             "# Dreamteam API reference\n",
             demote(api_truth).strip(),
+            "\n---\n",
+            "# Design standard\n",
+            demote(design).strip(),
         ])
+        for ref in ("api-truth.md", "design.md", "index.md", "SETUP.md",
+                    "raw.githubusercontent"):
+            if ref in body:
+                print(f"  FAIL: {pack.name} still points at {ref}", file=sys.stderr)
+                return 1
+
         dest = OUT / pack.name
         dest.write_text(body + "\n")
         print(f"  {dest.relative_to(ROOT)}  ({len(body.split()):,} words)")

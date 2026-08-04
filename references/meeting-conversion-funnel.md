@@ -286,6 +286,101 @@ Stage names are tenant-specific. Never match on the string "Won" or "Closed". Us
 
 ---
 
+## 5b. Further metrics
+
+Views A and B answer "where do contacts die". These answer *why*, and every one is
+derivable from fields already verified on a live tenant. Build the ones the tenant has
+data for and say plainly which you skipped.
+
+**Follow `design.md` for every form below.** Each entry names its form because the form
+follows the data's job, not preference.
+
+### Core, build these
+
+**1. Time to first meeting.**
+`contact.created_at` to the earliest `start_at` among its linked meetings. Report the
+median as a stat tile, and the spread as a column chart bucketed by days: same day,
+1-3, 4-7, 8-14, 15-30, 30+.
+*Why it matters:* the funnel says how many convert. This says how long they wait, and
+speed to first conversation is usually the most actionable lever a team has.
+
+**2. Cohort funnel.**
+Group contacts by `created_at` month, run the whole of View B within each cohort, and
+render as a **heatmap**: rows are cohorts, columns are funnel stages, cell is the
+conversion into that stage. One sequential hue, light to dark.
+*Why it matters:* this is the fix for View A being a snapshot. A blended funnel mixes
+contacts from different eras and hides whether things are improving. If the most recent
+cohorts are lighter, the problem is getting worse right now.
+
+**3. Funnel by source.**
+`contact.source` is a standard dropdown: Email, Meeting, CRM Form, Front Office
+Assistant, Website Form, Outbound, Others. Seven values sits at the ceiling for
+categorical colour, so render this as a **table** with a thin inline bar per row, not a
+seven-colour chart. Columns: contacts, booked, completed, qualified, and the
+completed-to-qualified rate.
+*Why it matters:* it separates volume from quality. A channel producing many contacts
+and no qualified meetings is costing money twice.
+
+**4. Funnel by owner.**
+Same shape as source, joining `owner_id` to `/api/v1/users`. Table, sorted by the
+completed-to-qualified rate. Use **emphasis**, not categorical colour: highlight rows
+materially below the team median in the accent, leave the rest in neutral ink.
+*Why it matters:* it distinguishes a pipeline problem from a person problem.
+
+**5. Status against reality.**
+Count contacts whose `contact_activity_status` implies a meeting happened but which
+have no linked meeting at all. Stat tile with the count and share.
+*Why it matters:* on a live tenant, 262 of 274 contacts marked "Meeting Booked" had no
+meeting attached. Either the CRM is being updated by hand and drifting, or the calendar
+integration is not attached. Both are worth knowing before anyone trusts the funnel.
+Check your `contact_ids` join first, because a broken join looks identical.
+
+### Build if the data supports it
+
+**6. Meetings before qualifying.**
+For contacts that reached Qualified or Opportunity Created, count completed meetings
+before they got there. Median as a stat tile, distribution as a small column chart.
+*Why it matters:* it sizes the real cost of a win and exposes teams stuck in
+never-ending discovery. Needs a reasonable number of qualified contacts to mean
+anything; below about 20, show the raw numbers instead of a median.
+
+**7. Sentiment against outcome.**
+`meeting.ai_sentiment` holds Good, Neutral or Bad. Cross it with whether the contact
+later qualified. Render as a **diverging stacked bar centred on Neutral**, since this
+is an ordered scale, not three unrelated categories.
+*Why it matters:* it tests whether the AI read of the room predicts anything. If Good
+meetings do not convert better than Bad ones, either the signal is noise or something
+downstream is losing deals that went well. Both are findings.
+Only build this if `ai_sentiment` is populated on a decent share of meetings. Check
+first and say so if it is sparse.
+
+**8. Meeting capture rate.**
+From the `/meetings` endpoint, `recording_bot` carries `state`, `status` and `reason`.
+Group into: captured, bot joined but never admitted, not applicable by design, and
+pending. Render as a single horizontal **stacked bar** with a 2px surface gap between
+segments.
+*Why it matters:* on one tenant, 33 meetings had the bot attached and sitting in a
+waiting room it was never admitted to. That is an enablement gap, not a product fault,
+and it is invisible in every other view. Read the `recording_bot` table in section 4
+before assigning buckets, and never treat a missing recording as a missing meeting.
+
+**9. Pipeline value per completed meeting.**
+Sum `deal.amount` for deals linked to contacts with a completed meeting, divided by the
+number of completed meetings. Hero figure.
+*Why it matters:* it is the one number that connects meeting activity to money, which
+is the language the person reading this dashboard actually thinks in. Say plainly that
+it is an average over a period and not a forecast. If `amount` is sparsely populated,
+show the populated share next to it or omit the metric.
+
+### Not derivable, do not fake
+
+- **No-show and cancelled rates.** No source field. See section 4.
+- **Stage or status history.** Records carry current values only, so you cannot show
+  how long a contact sat in a status, or reconstruct its path. The cohort heatmap is
+  the closest honest substitute.
+- **Meeting duration actually used.** `start_at` and `end_at` are the scheduled window,
+  not attendance. Do not present scheduled length as time spent.
+
 ## 6. Verify
 
 **The two views cross-check each other exactly. Assert all four of these before

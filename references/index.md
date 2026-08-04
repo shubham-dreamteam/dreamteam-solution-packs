@@ -43,10 +43,17 @@ build, including "something else".** It is not optional and it is not summarised
 anywhere else.
 File: `api-truth.md`
 
+### design
+The visual standard every build must meet: calm rather than loud, how to choose a chart
+form, colour rules, mark specs, and the prohibitions that make a dashboard look
+generated. **Load this for every build too.**
+File: `design.md`
+
 ---
 
 ## Something else
 
-If the customer wants a solution not listed here, load `api-truth.md` only, then follow
+If the customer wants a solution not listed here, load `api-truth.md` and `design.md`,
+then follow
 its rules. Discover the schema before designing anything, and hold to the same
 standards: server-side key, verified pagination, no invented numbers.

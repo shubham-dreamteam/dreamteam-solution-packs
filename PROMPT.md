@@ -52,9 +52,9 @@ Then ask me for three things:
 
 ## Step 3: Load the solution
 
-Fetch `references/api-truth.md` and the reference file for the solution I chose, from
-the same repository. Confirm you have both before building. If either fetch fails, stop
-and tell me.
+Fetch three files from the same repository and confirm you have all three before
+building: `references/api-truth.md`, `references/design.md`, and the reference file for
+the solution I chose. If any fetch fails, stop and tell me.
 
 ## Non-negotiable build rules
 
@@ -99,6 +99,12 @@ access, the site blocks you, or there is nothing there, say so plainly and then 
 back to: **Inter** as the typeface, a neutral palette, and **both light and dark mode**.
 Do not guess at our colours. When you do have the brand, still produce a light and a
 dark variant of it.
+
+Whether or not you get the brand, **`references/design.md` is binding**. It sets the
+visual standard: calm and precise rather than loud, one accent, tabular figures, no
+gradients or shadows on data, charts chosen by the data's job. Read it before you lay
+out a single screen, and check your output against its final section before you call
+anything done.
 
 **Copy: minimal, and never padded.** Where you need words, a landing page or an empty
 state, keep them short and plain. If you do not know what should go there, write less.
