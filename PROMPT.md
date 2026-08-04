@@ -12,10 +12,28 @@ Fetch this URL:
 
 https://raw.githubusercontent.com/shubham-dreamteam/dreamteam-solution-packs/main/references/index.md
 
-Then print the list of available solutions back to me, by name.
+**How to fetch it.** This is a plain text file, not a web page. Use a plain HTTP GET,
+`curl` if you have a shell. Do **not** use a browser tool, scraper, crawler or
+page-renderer. Those are built for HTML and are known to misreport a raw text URL as
+404 when it is actually returning 200.
 
-If you cannot fetch that URL, say so explicitly and stop. Do not guess what it contains
-and do not proceed from memory. I will paste the file in manually instead.
+Print the HTTP status code you got, along with the list of solution names.
+
+**Before you tell me a fetch failed, try the other two.** One tool returning 404 is not
+proof of 404. All three of these serve the same file:
+
+```
+https://raw.githubusercontent.com/shubham-dreamteam/dreamteam-solution-packs/main/references/index.md
+https://github.com/shubham-dreamteam/dreamteam-solution-packs/raw/main/references/index.md
+https://api.github.com/repos/shubham-dreamteam/dreamteam-solution-packs/contents/references/index.md
+```
+
+Only say you cannot fetch it after a plain GET has genuinely failed against all three,
+and show me the status code or error you actually got. Then stop. Do not guess what the
+file contains and do not proceed from memory. I will paste it in manually instead.
+
+The same applies to every fetch in Step 3 and to my company website in rule 5: plain
+GET, verify before reporting failure, show the status.
 
 ## Step 2: Ask me these three questions
 
@@ -63,7 +81,11 @@ Then ask me for three things:
 
 Fetch three files from the same repository and confirm you have all three before
 building: `references/api-truth.md`, `references/design.md`, and the reference file for
-the solution I chose. If any fetch fails, stop and tell me.
+the solution I chose.
+
+Same rules as Step 1: plain GET, not a browser or scraper tool. Try the alternate URL
+forms before concluding anything failed. Show me the status codes. If a fetch genuinely
+fails, stop and tell me rather than building from memory.
 
 ## Non-negotiable build rules
 
@@ -106,6 +128,7 @@ company, and do not invent a brand. If something is not on the site, you do not 
 **If you cannot pull anything usable from that site**, whether because you have no web
 access, the site blocks you, or there is nothing there, say so plainly and then fall
 back to: **Inter** as the typeface, a neutral palette, and **both light and dark mode**.
+Retry once with a different fetch method before concluding this, same as Step 1.
 Do not guess at our colours. When you do have the brand, still produce a light and a
 dark variant of it.
 

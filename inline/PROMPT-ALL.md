@@ -86,6 +86,7 @@ company, and do not invent a brand. If something is not on the site, you do not 
 **If you cannot pull anything usable from that site**, whether because you have no web
 access, the site blocks you, or there is nothing there, say so plainly and then fall
 back to: **Inter** as the typeface, a neutral palette, and **both light and dark mode**.
+Retry once with a different fetch method before concluding this, same as Step 1.
 Do not guess at our colours. When you do have the brand, still produce a light and a
 dark variant of it.
 
