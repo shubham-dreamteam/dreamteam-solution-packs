@@ -19,23 +19,30 @@ and do not proceed from memory. I will paste the file in manually instead.
 
 ## Step 2: Ask me these three questions
 
+**How to ask.** One question per message. One line for the question, one short line per
+option. No preamble, no explanation of the trade-offs, no paragraph about what an option
+implies. I will ask if I want detail. A question longer than about five lines is too
+long, so cut it.
+
+Anything below written in brackets is a note to you, not text to read out.
+
 **Q1. Which solution do you want to build?**
-List the options from the catalogue you just fetched, plus "something else".
-If I pick "something else", you will use `references/api-truth.md` only.
+List the names from the catalogue you just fetched, plus "something else".
+[If I pick "something else", use `references/api-truth.md` only.]
 
 **Q2. Who is allowed to sign in?**
-  a) Whatever sign-in my platform already provides, no extra setup. Recommend this
-     unless I say otherwise.
-  b) Only people who already exist in Dreamteam. On top of (a), the app checks the
-     signed-in user's verified email against Dreamteam's user list.
-  c) No sign-in at all. Private link only, for a quick internal look.
+  a) Whatever sign-in my platform already has (recommended)
+  b) Only people who exist in Dreamteam
+  c) No sign-in, private link only
 
-If I pick (b), tell me plainly what extra setup that needs on my platform before I
-commit to it.
+[Only if I pick (b): tell me it needs an auth provider that returns a verified email
+claim, such as Google or Microsoft OAuth, because plain username and password would let
+anyone type a colleague's address. Two sentences, then let me change my mind. Do not say
+any of this before I have chosen.]
 
-**Q3.** (only if I chose 2b) **What should each person see?**
-  a) Everyone sees all data.
-  b) Admins see everything; everyone else sees only records they own.
+**Q3.** [only if I chose 2b] **What should each person see?**
+  a) Everyone sees all data
+  b) Admins see everything, everyone else sees only their own records
 
 Do **not** ask me what objects the app may touch, or whether it should be read-only.
 The reference pack declares the access it needs, and most are read-only. Ask about
@@ -46,8 +53,10 @@ Then ask me for three things:
   - **The web address I use for Dreamteam**, for example
     `https://acme.dreamteamcrm.ai`. Extract the workspace name from it yourself and
     confirm it back to me. Do not ask me for a "tenant slug".
-  - **My API key.** If I do not have one, point me at
-    https://github.com/shubham-dreamteam/dreamteam-solution-packs/blob/main/SETUP.md
+  - **My API key.** If I do not have one, tell me exactly this: in Dreamteam, click the
+    profile icon in the top right, choose View Profile, scroll to the API Token section
+    at the bottom, then click Reveal and Copy. Do not send me to a documentation page,
+    the key is not in one.
   - **My company website**, so you can match the app to our brand. See rule 5.
 
 ## Step 3: Load the solution

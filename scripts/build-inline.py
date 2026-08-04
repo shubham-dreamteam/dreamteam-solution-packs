@@ -75,21 +75,14 @@ def build_questions(prompt: str) -> str:
 
     q = replace_once(
         q,
-        "List the options from the catalogue you just fetched, plus \"something else\".",
-        "List the options from the catalogue further down this message, under\n"
-        "\"Available solutions\". Read them out to me by name, and add \"something else\".",
+        "List the names from the catalogue you just fetched, plus \"something else\".",
+        "List the names from the catalogue further down this message, under\n"
+        "\"Available solutions\", plus \"something else\".",
         "Q1 catalogue source")
-    q = q.replace("If I pick \"something else\", you will use `references/api-truth.md` only.",
-                  "If I pick \"something else\", use only the API reference and design standard\n"
-                  "at the end of this message.")
+    q = q.replace("[If I pick \"something else\", use `references/api-truth.md` only.]",
+                  "[If I pick \"something else\", use only the API reference and design\n"
+                  "standard at the end of this message.]")
     q = q.replace("The reference pack declares", "The chosen solution declares")
-
-    # SETUP.md cannot be opened from here.
-    q = re.sub(
-        r"- \*\*My API key\.\*\*.*?SETUP\.md",
-        "- **My API key.** If I do not have one, tell me to open my Dreamteam profile,\n"
-        "    scroll to API Token, and click Reveal then Copy.",
-        q, flags=re.S)
 
     return q.rstrip()
 
