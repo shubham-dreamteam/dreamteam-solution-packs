@@ -75,16 +75,16 @@ It will ask you a few questions, then build.
     [If I pick "something else", use `references/api-truth.md` only.]
 
     **Q2. Who is allowed to sign in?**
-      a) Whatever sign-in my platform already has (recommended)
-      b) Only people who exist in Dreamteam
+      a) Only people who exist in Dreamteam (recommended)
+      b) Whatever sign-in my platform already has
       c) No sign-in, private link only
 
-    [Only if I pick (b): in one or two sentences, tell me it needs an auth provider that
+    [Only if I pick (a): in one or two sentences, tell me it needs an auth provider that
     returns a verified email claim, such as Google or Microsoft OAuth. Then carry straight
-    on with (b). Do not say any of this before I have chosen, and do not ask the question
+    on with (a). Do not say any of this before I have chosen, and do not ask the question
     again.]
 
-    **Q3.** [only if I chose 2b] **What should each person see?**
+    **Q3.** [only if I chose 2a] **What should each person see?**
       a) Everyone sees all data
       b) Admins see everything, everyone else sees only their own records
 
@@ -221,7 +221,7 @@ job. You do not write code, pick a schema, or configure an API.
 | | Question | Why it is asked |
 |---|---|---|
 | Q1 | Which solution | Picks which reference pack gets loaded |
-| Q2 | Who can sign in | Default is whatever your platform already provides, no setup |
+| Q2 | Who can sign in | Default is Dreamteam users only, checked against your user list |
 | Q3 | What each person sees | Keys are shared, so per-user scoping has to be built |
 
 Then two pastes: **your Dreamteam web address** and **your API key**. Both come from the
@@ -234,9 +234,10 @@ pack declares that itself.
 
 Two places you still have to think:
 
-**Dreamteam-gated sign-in needs an identity provider.** If you pick Q2b, you need real
-auth on your platform, which is genuine setup. The default, Q2a, uses whatever sign-in
-your platform already gives you and needs nothing.
+**Dreamteam-gated sign-in needs an identity provider.** The recommended option, Q2a,
+checks the signed-in person against your Dreamteam user list, which requires an auth
+provider that returns a verified email such as Google or Microsoft. That is real setup.
+Q2b uses whatever sign-in your platform already gives you and needs nothing.
 
 **Nobody validates the numbers but you.** The packs assert internal consistency and fail
 loudly on a mismatch, but they cannot know your business. Check the first output against

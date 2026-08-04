@@ -62,16 +62,16 @@ List the names from the catalogue you just fetched, plus "something else".
 [If I pick "something else", use `references/api-truth.md` only.]
 
 **Q2. Who is allowed to sign in?**
-  a) Whatever sign-in my platform already has (recommended)
-  b) Only people who exist in Dreamteam
+  a) Only people who exist in Dreamteam (recommended)
+  b) Whatever sign-in my platform already has
   c) No sign-in, private link only
 
-[Only if I pick (b): in one or two sentences, tell me it needs an auth provider that
+[Only if I pick (a): in one or two sentences, tell me it needs an auth provider that
 returns a verified email claim, such as Google or Microsoft OAuth. Then carry straight
-on with (b). Do not say any of this before I have chosen, and do not ask the question
+on with (a). Do not say any of this before I have chosen, and do not ask the question
 again.]
 
-**Q3.** [only if I chose 2b] **What should each person see?**
+**Q3.** [only if I chose 2a] **What should each person see?**
   a) Everyone sees all data
   b) Admins see everything, everyone else sees only their own records
 
