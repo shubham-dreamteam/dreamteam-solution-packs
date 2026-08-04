@@ -7,19 +7,24 @@ web access, so the bootloader's fetch step fails. This concatenates the bootload
 api-truth.md and one solution pack into a single paste.
 
 One file per solution, because picking the solution on the website removes the need
-to ask Q1 and keeps each paste as short as it can be.
+to ask which one, and keeps each paste as short as it can be.
+
+Everything is derived from PROMPT.md and references/. Nothing is duplicated here, so
+a rule added to PROMPT.md automatically reaches the inline builds. An earlier version
+kept its own copy of the build rules and silently drifted two releases behind.
 
 Usage:  python3 scripts/build-inline.py
 """
 
 import pathlib
 import re
+import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 REFS = ROOT / "references"
 OUT = ROOT / "inline"
 
-HEADER = """You are going to build an application on top of Dreamteam CRM data.
+PREAMBLE = """You are going to build an application on top of Dreamteam CRM data.
 
 Everything you need is in this message. Do not try to fetch any URL. If you cannot
 reach the internet, that is fine and expected.
@@ -30,71 +35,67 @@ Ask me the questions in the next section first. Do not scaffold a project, do no
 create files, do not "start with a basic version".
 
 ## Ask me these questions
-
-**Q1. Who is allowed to sign in?**
-  a) Whatever sign-in my platform already provides, no extra setup. Recommend this
-     unless I say otherwise.
-  b) Only people who already exist in Dreamteam. On top of (a), the app checks the
-     signed-in user's verified email against Dreamteam's user list.
-  c) No sign-in at all. Private link only, for a quick internal look.
-
-If I pick (b), tell me plainly what extra setup that needs on my platform before I
-commit to it.
-
-**Q2.** (only if I chose 1b) **What should each person see?**
-  a) Everyone sees all data.
-  b) Admins see everything; everyone else sees only records they own.
-
-Do **not** ask me what objects the app may touch, or whether it should be read-only.
-The solution below declares the access it needs. Ask about writing back only if what
-I described is genuinely ambiguous about it, and then ask it as one plain question,
-once.
-
-Then ask me for two things:
-  - **The web address I use for Dreamteam**, for example
-    `https://acme.dreamteamcrm.ai`. Extract the workspace name from it yourself and
-    confirm it back to me. Do not ask me for a "tenant slug".
-  - **My API key.** If I do not have one, tell me to open my Dreamteam profile,
-    scroll to API Token, and click Reveal then Copy.
-
-## Non-negotiable build rules
-
-**1. The API key lives on the server.**
-The application must have a server-side route that holds the key and calls Dreamteam.
-The browser calls only your own routes, never Dreamteam directly.
-
-This is not a preference. Dreamteam's API rejects browser requests from any origin
-outside `*.dreamteamcrm.ai` at CORS preflight, before the key is even checked. A
-client-side fetch will not work. It would also ship the key to every visitor.
-
-If your platform cannot run server-side code, stop and tell me, because this cannot
-be built safely there.
-
-**2. Paginate correctly, and prove it.**
-The two Dreamteam list APIs use opposite conventions and neither errors when you get
-it wrong. You will silently receive a fraction of the data and everything will look
-fine. The API reference at the end of this message has the exact rules. Follow them,
-and assert your row count against the reported total before rendering anything.
-
-**3. Discover the schema before assuming it.**
-Call the describe endpoint for each object and use the field names that tenant
-actually has. Never hardcode a field name or a pipeline stage from an example.
-
-**4. Build what the API can do.**
-If Dreamteam's API supports it, the app may do it. Do not restrict the application
-beyond what the solution asks for.
-
-**5. Never invent a number.**
-If a metric cannot be derived from available fields, show it as unavailable and tell
-me why. Do not estimate, interpolate, or fill gaps. A blank cell is fine. A plausible
-wrong number is not.
-
----
 """
+
+# Rule 5 tells the agent to fetch a website. On a platform that reached for the inline
+# build, that will usually fail, so lead with the fallback instead of burying it.
+NO_WEB_NOTE = (
+    "\n\nYou are probably running somewhere without web access, since that is why you\n"
+    "were given this self-contained version. In that case say so plainly, then either\n"
+    "ask me to paste our brand colours and logo URL, or use the fallback above.\n"
+)
+
+
+def section(text: str, start: str, end: str | None) -> str:
+    """Slice a markdown document between two headings."""
+    i = text.index(start)
+    j = text.index(end, i) if end else len(text)
+    return text[i:j].rstrip()
+
+
+def build_questions(prompt: str) -> str:
+    """Reuse PROMPT.md's questions, minus the one the filename already answers."""
+    q = section(prompt, "**Q1. Which solution", "## Step 3")
+
+    # Drop Q1: choosing this file already chose the solution.
+    q = q[q.index("**Q2. Who is allowed to sign in?**"):]
+
+    # Renumber, and fix the cross-reference inside Q3.
+    q = q.replace("**Q2. Who is allowed to sign in?**", "**Q1. Who is allowed to sign in?**")
+    q = q.replace("**Q3.** (only if I chose 2b)", "**Q2.** (only if I chose 1b)")
+    q = q.replace("The reference pack declares", "The solution below declares")
+
+    # Nothing is fetchable, so the SETUP.md link cannot be followed.
+    q = re.sub(
+        r"- \*\*My API key\.\*\*.*?SETUP\.md",
+        "- **My API key.** If I do not have one, tell me to open my Dreamteam profile,\n"
+        "    scroll to API Token, and click Reveal then Copy.",
+        q, flags=re.S)
+
+    return q.rstrip()
+
+
+def build_rules(prompt: str) -> str:
+    rules = section(prompt, "## Non-negotiable build rules", "## If the catalogue fetch failed")
+
+    # Platform hints that assume a fetchable repo, and the pointer to the pack file.
+    rules = rules.replace(
+        "`api-truth.md` has the exact rules.",
+        "The API reference at the end of this message has the exact rules.")
+    rules = rules.replace(
+        "beyond what the reference pack asks for. If the pack says read-only",
+        "beyond what the solution below asks for. If it says read-only")
+
+    # Surface the no-web fallback inside the branding rule.
+    anchor = "dark variant of it."
+    if anchor in rules:
+        rules = rules.replace(anchor, anchor + NO_WEB_NOTE, 1)
+
+    return rules.rstrip()
 
 
 def demote(text: str) -> str:
-    """Push headings down two levels so the embedded docs sit under their section."""
+    """Push headings down two levels so embedded docs sit under their section."""
     return re.sub(r"^(#{1,4}) ", lambda m: "#" * min(len(m.group(1)) + 2, 6) + " ",
                   text, flags=re.M)
 
@@ -113,18 +114,22 @@ def strip_cross_refs(text: str) -> str:
 
 
 def main() -> int:
+    prompt = (ROOT / "PROMPT.md").read_text()
     api_truth = (REFS / "api-truth.md").read_text()
     packs = sorted(p for p in REFS.glob("*.md")
                    if p.name not in {"api-truth.md", "index.md"})
 
     if not packs:
-        print("no solution packs found in references/")
+        print("no solution packs found in references/", file=sys.stderr)
         return 1
+
+    head = "\n\n".join([PREAMBLE.rstrip(), build_questions(prompt), build_rules(prompt)])
 
     OUT.mkdir(exist_ok=True)
     for pack in packs:
         body = "\n\n".join([
-            HEADER.rstrip(),
+            head,
+            "\n---\n",
             "# The solution to build\n",
             demote(strip_cross_refs(pack.read_text())).strip(),
             "\n---\n",

@@ -59,12 +59,13 @@ It will ask you a few questions, then build.
     writing back only if what I described is genuinely ambiguous about it, and then ask it
     as one plain question, once.
 
-    Then ask me for two things:
+    Then ask me for three things:
       - **The web address I use for Dreamteam**, for example
         `https://acme.dreamteamcrm.ai`. Extract the workspace name from it yourself and
         confirm it back to me. Do not ask me for a "tenant slug".
       - **My API key.** If I do not have one, point me at
         https://github.com/shubham-dreamteam/dreamteam-solution-packs/blob/main/SETUP.md
+      - **My company website**, so you can match the app to our brand. See rule 5.
 
     ## Step 3: Load the solution
 
@@ -101,7 +102,27 @@ It will ask you a few questions, then build.
     beyond what the reference pack asks for. If the pack says read-only, stay read-only. If
     it declares writes, build them properly.
 
-    **5. Prove the connection works before building anything else.**
+    **5. Take the branding from my website, and nowhere else.**
+    Fetch the company website I gave you and pull the design language from it: logo, colour
+    palette, typography, spacing and general feel. Also read what the company actually does,
+    what it sells and who it sells to, and use that so the app reads as our internal tool
+    rather than a generic dashboard.
+
+    Only from the site I gave you. Do not search for us, do not use a similarly named
+    company, and do not invent a brand. If something is not on the site, you do not know it.
+
+    **If you cannot pull anything usable from that site**, whether because you have no web
+    access, the site blocks you, or there is nothing there, say so plainly and then fall
+    back to: **Inter** as the typeface, a neutral palette, and **both light and dark mode**.
+    Do not guess at our colours. When you do have the brand, still produce a light and a
+    dark variant of it.
+
+    **Copy: minimal, and never padded.** Where you need words, a landing page or an empty
+    state, keep them short and plain. If you do not know what should go there, write less.
+    No marketing language, no invented value propositions, no filler headings, no taglines
+    you made up. Blank beats fluff.
+
+    **6. Prove the connection works before building anything else.**
     Your first task after I give you the key is a connection test: call `/api/v1/users` and
     show me the result. Use `Authorization: Bearer <key>` plus the `Origin` header. If that
     returns 401, retry once with `x-api-key` instead, because older keys use that. Tell me
@@ -110,7 +131,7 @@ It will ask you a few questions, then build.
     Do not build a single screen until this passes. Debugging auth through a half-built
     dashboard wastes both our time.
 
-    **6. Never turn a failed API call into a statement about my business.**
+    **7. Never turn a failed API call into a statement about my business.**
     An API call has three outcomes, not two: data, genuinely empty, and failed. Never
     collapse "failed" into "empty".
 
@@ -122,7 +143,7 @@ It will ask you a few questions, then build.
     This has already gone wrong in a real build, and it sent someone to their admin to solve
     a problem that did not exist.
 
-    **7. Never invent a number.**
+    **8. Never invent a number.**
     If a metric cannot be derived from available fields, show it as unavailable and tell me
     why. Do not estimate, interpolate, or fill gaps. A blank cell is fine. A plausible wrong
     number is not.

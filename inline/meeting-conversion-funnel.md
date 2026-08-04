@@ -25,16 +25,17 @@ commit to it.
   b) Admins see everything; everyone else sees only records they own.
 
 Do **not** ask me what objects the app may touch, or whether it should be read-only.
-The solution below declares the access it needs. Ask about writing back only if what
-I described is genuinely ambiguous about it, and then ask it as one plain question,
-once.
+The solution below declares the access it needs, and most are read-only. Ask about
+writing back only if what I described is genuinely ambiguous about it, and then ask it
+as one plain question, once.
 
-Then ask me for two things:
+Then ask me for three things:
   - **The web address I use for Dreamteam**, for example
     `https://acme.dreamteamcrm.ai`. Extract the workspace name from it yourself and
     confirm it back to me. Do not ask me for a "tenant slug".
   - **My API key.** If I do not have one, tell me to open my Dreamteam profile,
     scroll to API Token, and click Reveal then Copy.
+  - **My company website**, so you can match the app to our brand. See rule 5.
 
 ## Non-negotiable build rules
 
@@ -44,31 +45,81 @@ The browser calls only your own routes, never Dreamteam directly.
 
 This is not a preference. Dreamteam's API rejects browser requests from any origin
 outside `*.dreamteamcrm.ai` at CORS preflight, before the key is even checked. A
-client-side fetch will not work. It would also ship the key to every visitor.
+client-side fetch will not work. It would also ship an org-wide key to every visitor.
 
-If your platform cannot run server-side code, stop and tell me, because this cannot
-be built safely there.
+If you are building in Lovable, put the Dreamteam calls in a Supabase edge function.
+If you are building in v0 or Next.js, use route handlers. If your platform cannot run
+server-side code, stop and tell me, because this cannot be built safely there.
 
 **2. Paginate correctly, and prove it.**
-The two Dreamteam list APIs use opposite conventions and neither errors when you get
-it wrong. You will silently receive a fraction of the data and everything will look
-fine. The API reference at the end of this message has the exact rules. Follow them,
-and assert your row count against the reported total before rendering anything.
+The two Dreamteam list APIs use opposite conventions and neither errors when you get it
+wrong. You will silently receive a fraction of the data and everything will look fine.
+The API reference at the end of this message has the exact rules. Follow them, and assert your row count against the
+reported total before rendering anything.
 
 **3. Discover the schema before assuming it.**
-Call the describe endpoint for each object and use the field names that tenant
-actually has. Never hardcode a field name or a pipeline stage from an example.
+Call the describe endpoint for each object and use the field names that tenant actually
+has. Never hardcode a field name or a pipeline stage from an example.
 
 **4. Build what the API can do.**
 If Dreamteam's API supports it, the app may do it. Do not restrict the application
-beyond what the solution asks for.
+beyond what the solution below asks for. If it says read-only, stay read-only. If
+it declares writes, build them properly.
 
-**5. Never invent a number.**
-If a metric cannot be derived from available fields, show it as unavailable and tell
-me why. Do not estimate, interpolate, or fill gaps. A blank cell is fine. A plausible
-wrong number is not.
+**5. Take the branding from my website, and nowhere else.**
+Fetch the company website I gave you and pull the design language from it: logo, colour
+palette, typography, spacing and general feel. Also read what the company actually does,
+what it sells and who it sells to, and use that so the app reads as our internal tool
+rather than a generic dashboard.
+
+Only from the site I gave you. Do not search for us, do not use a similarly named
+company, and do not invent a brand. If something is not on the site, you do not know it.
+
+**If you cannot pull anything usable from that site**, whether because you have no web
+access, the site blocks you, or there is nothing there, say so plainly and then fall
+back to: **Inter** as the typeface, a neutral palette, and **both light and dark mode**.
+Do not guess at our colours. When you do have the brand, still produce a light and a
+dark variant of it.
+
+You are probably running somewhere without web access, since that is why you
+were given this self-contained version. In that case say so plainly, then either
+ask me to paste our brand colours and logo URL, or use the fallback above.
+
+
+**Copy: minimal, and never padded.** Where you need words, a landing page or an empty
+state, keep them short and plain. If you do not know what should go there, write less.
+No marketing language, no invented value propositions, no filler headings, no taglines
+you made up. Blank beats fluff.
+
+**6. Prove the connection works before building anything else.**
+Your first task after I give you the key is a connection test: call `/api/v1/users` and
+show me the result. Use `Authorization: Bearer <key>` plus the `Origin` header. If that
+returns 401, retry once with `x-api-key` instead, because older keys use that. Tell me
+which one worked.
+
+Do not build a single screen until this passes. Debugging auth through a half-built
+dashboard wastes both our time.
+
+**7. Never turn a failed API call into a statement about my business.**
+An API call has three outcomes, not two: data, genuinely empty, and failed. Never
+collapse "failed" into "empty".
+
+A 401 while checking whether a user exists means the lookup broke. It does not mean the
+user is missing. Do not render "not a member of this workspace", "no deals found" or
+"zero meetings" unless a request actually succeeded. Show the failing call and its
+status code instead, so I can fix it.
+
+This has already gone wrong in a real build, and it sent someone to their admin to solve
+a problem that did not exist.
+
+**8. Never invent a number.**
+If a metric cannot be derived from available fields, show it as unavailable and tell me
+why. Do not estimate, interpolate, or fill gaps. A blank cell is fine. A plausible wrong
+number is not.
+
 
 ---
+
 
 # The solution to build
 
