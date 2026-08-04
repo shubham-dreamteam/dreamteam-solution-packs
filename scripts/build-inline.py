@@ -50,6 +50,22 @@ NO_WEB_NOTE = (
 # Anything naming a file the agent cannot fetch is a bug in the generated prompt.
 FORBIDDEN = ("api-truth.md", "design.md", "index.md", "SETUP.md", "raw.githubusercontent")
 
+# Every behavioural rule in PROMPT.md must survive into the inline build. Slicing by
+# heading has now dropped rules twice without failing, so assert they arrived.
+REQUIRED = (
+    "How to ask.",
+    "Ask each question exactly once.",
+    "No progress narration.",
+    "The API key lives on the server.",
+    "Paginate correctly, and prove it.",
+    "Discover the schema before assuming it.",
+    "Build what the API can do.",
+    "Take the branding from my website",
+    "Prove the connection works before building anything else.",
+    "Never turn a failed API call into a statement about my business.",
+    "Never invent a number.",
+)
+
 
 def section(text: str, start: str, end: str | None) -> str:
     """Slice a markdown document between two markers."""
@@ -70,8 +86,13 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 
 def build_questions(prompt: str) -> str:
-    """Reuse PROMPT.md's questions verbatim, repointing the fetches."""
-    q = section(prompt, "**Q1. Which solution", "## Step 3")
+    """Reuse PROMPT.md's questions verbatim, repointing the fetches.
+
+    Slice from the asking-style rules, not from Q1. Starting at Q1 silently dropped
+    every rule written above it, which is how the inline build lost the whole
+    "how to ask" block without anything failing.
+    """
+    q = section(prompt, "**How to ask.**", "## Step 3")
 
     q = replace_once(
         q,
@@ -183,6 +204,12 @@ def main() -> int:
         if ref in body:
             print(f"  FAIL: generated prompt still points at {ref}", file=sys.stderr)
             return 1
+
+    missing = [r for r in REQUIRED if r not in body]
+    if missing:
+        for r in missing:
+            print(f"  FAIL: rule dropped on the way in: {r!r}", file=sys.stderr)
+        return 1
 
     OUT.mkdir(exist_ok=True)
     DEST.write_text(body)

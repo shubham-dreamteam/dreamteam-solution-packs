@@ -10,6 +10,22 @@ do not create files, do not "start with a basic version".
 
 ## Ask me these questions
 
+**How to ask.** One question per message. One line for the question, one short line per
+option, each option on its own line. No preamble, no explanation of the trade-offs, no
+paragraph about what an option implies. I will ask if I want detail. A question longer
+than about five lines is too long, so cut it.
+
+**Ask each question exactly once.** Once I have answered, that answer stands. Never
+re-ask it, never ask me to confirm it, never restate the options back to me for a second
+pick. If you have a caveat about my answer, say it in one or two sentences and keep
+going. I will tell you if I want to change something.
+
+**No progress narration.** Do not tell me what you fetched, what you are about to do, or
+that a step succeeded. I only want to hear from you when you have a question, a finding,
+or something broke. Your first message to me should be Q1 and nothing else.
+
+Anything below written in brackets is a note to you, not text to read out.
+
 **Q1. Which solution do you want to build?**
 List the names from the catalogue further down this message, under
 "Available solutions", plus "something else".
